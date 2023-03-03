@@ -1,0 +1,16 @@
+.PHONY: mysql mysql/dump mysql/restore
+
+mysql:
+	docker exec -it $(DOCKER_DATABASE) mysql -uroot -p"$(DATABASE_ROOT_PASSWORD)" $(DATABASE_NAME)
+
+mysql/dump:
+	docker exec $(DOCKER_DATABASE) bash -c 'mysqldump -uroot -p"$(DATABASE_ROOT_PASSWORD)" "$(DATABASE_NAME)" > "/tmp/$(DATABASE_NAME).sql"'
+	docker exec $(DOCKER_DATABASE) cat "/tmp/$(DATABASE_NAME).sql" > "./docker/backup/$(DATABASE_NAME).sql"
+	if [ 1 -eq "$(APP_DUMP_HOURLY)" ]; then cp "./docker/backup/$(DATABASE_NAME).sql" "./docker/backup/$(DATABASE_NAME)_`date +%H`.sql"; fi
+
+mysql/restore:
+ifneq ($(wildcard ./docker/dump/$(DATABASE_NAME).sql),)
+	docker exec $(DOCKER_DATABASE) bash -c 'mysqldump -uroot -p"$(DATABASE_ROOT_PASSWORD)" "$(DATABASE_NAME)" > "/tmp/$(DATABASE_NAME).restore.sql"'
+	docker exec $(DOCKER_DATABASE) cat "/tmp/$(DATABASE_NAME).restore.sql" > "./docker/backup/$(DATABASE_NAME).restore.sql"
+	cat "./docker/backup/$(DATABASE_NAME).sql" | docker exec -i $(DOCKER_DATABASE) mysql -uroot -p"$(DATABASE_ROOT_PASSWORD)" "$(DATABASE_NAME)"
+endif
