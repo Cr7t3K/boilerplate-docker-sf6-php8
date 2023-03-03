@@ -47,7 +47,7 @@ install:
 ## ----------------------------------------------------------
 ## Composer
 ## ----------------------------------------------------------
-.PHONY: composer/install composer/install-php-cs-fixer php-fix phpstan grumphp
+.PHONY: composer/install composer/install-php-cs-fixer php-fix phpstan grumphp entity
 
 composer/install:
 ifeq (prod, $(APP_ENV))
@@ -55,6 +55,9 @@ ifeq (prod, $(APP_ENV))
 else
 	docker exec -it ${DOCKER_PHP} php -d memory_limit=-1 /usr/bin/composer install
 endif
+
+entity:
+	docker exec -it ${DOCKER_PHP} php -d memory_limit=-1 bin/console make:entity
 
 php-fix:
 	docker exec -it ${DOCKER_PHP} php -d memory_limit=-1 vendor/bin/php-cs-fixer fix -vvv --show-progress=dots
